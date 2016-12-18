@@ -1,0 +1,3 @@
+{"src/pb/*", [ {outdir, "ebin"}, {i, "include"},verbose,report_errors,report_warnings,{warn_format,2}]}.
+{"src/*", [ {outdir, "ebin"}, {i, "include"},verbose,report_errors,report_warnings,{warn_format,2}]}.
+

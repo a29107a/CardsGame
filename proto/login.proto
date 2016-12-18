@@ -1,0 +1,11 @@
+message cs_login {
+    required int32 how = 1; //0 quick login and create an account
+    required string parameters = 2;
+}
+
+message sc_login_result{
+    required int32 error_code = 1; //0 success
+    required int64 account_id = 2;
+}
+
+
