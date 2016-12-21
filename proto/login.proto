@@ -1,11 +1,38 @@
-message cs_login {
-    required int32 how = 1; //0 quick login and create an account
+message cl_login{//1001
+    required int32 how = 1;
     required string parameters = 2;
 }
 
-message sc_login_result{
-    required int32 error_code = 1; //0 success
-    required int64 account_id = 2;
+message account_info{
+    required int64 account_id = 1;
 }
 
+message lc_login_result{//1002
+    required int32 error_code = 1;
+    optional int64 account_id = 2;
+    optional account_info account_info = 3;
+}
 
+message cl_fetch_game_server_list{//1003
+}
+
+message game_server_info{
+    required int32 server_id = 1;
+    required int32 server_game_id = 2;
+    optional string server_name = 4;
+}
+
+message lc_fetched_game_server_list{//1004
+    repeated game_server_info game_servers = 1;
+}
+
+message cl_select_game_server{//1005
+    optional int32 server_id = 1;
+    optional int32 server_game_id = 2;
+}
+
+message lc_select_game_server_result{//1006
+    required int32 error_code = 1;
+    optional string address = 2;
+    optional int32 port = 3;
+}
