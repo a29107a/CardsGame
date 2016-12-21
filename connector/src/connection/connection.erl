@@ -70,6 +70,15 @@ handle_info({tcp_passive, Socket},#{socket := Socket, last_tcp_passive_milli_sec
       {noreply,maps:put(last_tcp_passive_milli_seconds,NowMilliSeconds,State)}
   end;
 
+handle_info({tcp_closed,_}, State) ->
+  {stop, normal, State};
+
+handle_info({tcp_error,_,Reason}, State) ->
+  {stop, Reason, State};
+
+handle_info(timeout, State) ->
+  {stop, normal, State};
+
 handle_info(_Info, State) ->
   {noreply, State}.
 
