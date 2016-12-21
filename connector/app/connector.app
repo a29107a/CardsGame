@@ -1,11 +1,10 @@
-{application, connector_app, [
+{application, connector, [
   {description, "connector app, listens for client connection."},
   {vsn, "1"},
   {registered, []},
   {applications, [
     kernel,
-    stdlib,
-    ranch
+    stdlib
   ]},
   {mod, {connector_app, []}},
   {env, []}

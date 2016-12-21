@@ -1,4 +1,4 @@
--module(connection).
+-module(connection_protocol).
 -behaviour(gen_server).
 -behaviour(ranch_protocol).
 
@@ -19,7 +19,7 @@
 %%close this connection if received ACTIVE_NUM packets in CLOSE_SOCKET_PACKETS_THRESHOLD milliseconds
 
 start_link() ->
-  gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+  gen_server:start_link(?MODULE, [], []).
 
 start_link(Ref, Socket, Transport, Opts) ->
   proc_lib:start_link(?MODULE, init, [Ref, Socket, Transport, Opts]).
@@ -29,19 +29,19 @@ start_link(Ref, Socket, Transport, Opts) ->
 init([]) ->
   {ok, not_used}.
 
-init(Ref, Socket, Transport, _Opts = []) ->
+init(Ref, Socket, Transport, Opts) ->
   ok = proc_lib:init_ack({ok, self()}),
   ok = ranch:accept_ack(Ref),
   {ok, {Ip,Port}} = inet:peername(Socket),
   ThisMilliSeconds = erlang:system_time(milli_seconds),
   IpStringBinary = unicode:characters_to_binary(inet:ntoa(Ip)),
-  State = #{
+  State = maps:merge(#{
     socket => Socket,
     transport => Transport,
     ip => IpStringBinary,
     port => Port,
     last_tcp_passive_milli_seconds => ThisMilliSeconds,
-    last_heart_beat => ThisMilliSeconds},
+    last_heart_beat => ThisMilliSeconds}, Opts),
   erlang:send(erlang:self(),initialize_socket_parameters),
   gen_server:enter_loop(?MODULE, [],State, timer:seconds(10)).
 
@@ -56,8 +56,37 @@ handle_info(initialize_socket_parameters, State) ->
   Socket = maps:get(socket,State),
   inet:setopts(Socket, [{active, ?ACTIVE_NUM},{packet, 4},{keepalive, true},binary]),
   {noreply,State};
+%%
+%%handle_info({tcp, Socket, Data}, #{socket := Socket} = Connection) ->
 
-handle_info({tcp_passive, Socket},#{socket := Socket, last_tcp_passive_milli_seconds := LastTcpPassiveMilliSeconds} = State)->
+%%try
+%%Message = decode:decode( Data ),
+%%Reply =  client_handle:handle(Message, State),
+%%lager:info_unsafe( "Client... received client message: ~p in State: ~p, Reply: ~p", [ Message, State, Reply ]),
+%%case Reply of
+%%NewClientState when erlang:is_map(NewClientState) ->
+%%{noreply, NewClientState};
+%%{reply,ReplyData} ->
+%%send_socket(State, ReplyData),
+%%{noreply, State};
+%%{reply, ReplyData, NewState} ->
+%%send_socket(State, ReplyData),
+%%{noreply, NewState};
+%%false ->
+%%{noreply, State};
+%%_ ->
+%%{noreply, State}
+%%end
+%%catch
+%%ErrorType:ErrorReason ->
+%%send_socket(State, client_handle:generate_terminate_connection(1)),
+%%lager:error( "ErrorType: ~p, ErrorReason: ~p, stacktrace: ~p", [ ErrorType, ErrorReason, erlang:get_stacktrace()]),
+%%{noreply, State}
+%%end;
+
+
+handle_info({tcp_passive, Socket},
+  #{socket := Socket,last_tcp_passive_milli_seconds := LastTcpPassiveMilliSeconds} = State)->
   NowMilliSeconds = erlang:system_time(milli_seconds),
 %%  AveragePacketsPerMilliSeconds = ?ACTIVE_NUM / ( NowMilliSeconds - LastTcpPassiveMilliSeconds ) ,
   ReceivedPacketsBetweenMilliSeconds = NowMilliSeconds - LastTcpPassiveMilliSeconds,

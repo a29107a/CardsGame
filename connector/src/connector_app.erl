@@ -4,7 +4,7 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-  case 'connector_sup':start_link() of
+  case connector_sup:start_link() of
     {ok, Pid} ->
       {ok, Pid};
     Error ->
