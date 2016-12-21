@@ -35,15 +35,16 @@ init(Ref, Socket, Transport, Opts) ->
   {ok, {Ip,Port}} = inet:peername(Socket),
   ThisMilliSeconds = erlang:system_time(milli_seconds),
   IpStringBinary = unicode:characters_to_binary(inet:ntoa(Ip)),
-  State = maps:merge(#{
+  ScoketStateMap = #{
     socket => Socket,
     transport => Transport,
     ip => IpStringBinary,
     port => Port,
     last_tcp_passive_milli_seconds => ThisMilliSeconds,
-    last_heart_beat => ThisMilliSeconds}, Opts),
+    last_heart_beat => ThisMilliSeconds},
+  ConnectionMap = maps:merge(ScoketStateMap,Opts),
   erlang:send(erlang:self(),initialize_socket_parameters),
-  gen_server:enter_loop(?MODULE, [],State, timer:seconds(10)).
+  gen_server:enter_loop(?MODULE, [],ConnectionMap, timer:seconds(10)).
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
@@ -58,8 +59,7 @@ handle_info(initialize_socket_parameters, State) ->
 
 handle_info({tcp, Socket, BinarySocketData}, #{socket := Socket} = Connection) ->
   try
-    Decoder = maps:get(decoder,Connection,decode),
-    Handler = maps:get(handler,Connection,handle),
+    #{decoder := Decoder, handler := Handler} = Connection,
     Message = Decoder:decode(BinarySocketData),
     case Handler:handle(Message,Connection) of
       NewConnection when erlang:is_map(NewConnection) ->
@@ -113,6 +113,6 @@ send_reply(Connection,Reply) when erlang:is_binary(Reply) ->
   #{socket := Socket, transport := Transport} = Connection,
   Transport:send(Socket, Reply);
 send_reply(Connection,Reply) when erlang:is_tuple(Reply) ->
-  #{encoder := Encoder} = Connection,
+  Encoder = maps:get(encoder,Connection),
   BinaryReply = Encoder:encode(Reply),
   send_reply(Connection, BinaryReply).
