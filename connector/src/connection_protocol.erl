@@ -45,7 +45,6 @@ init(Ref, Socket, Transport, Opts) ->
   erlang:send(erlang:self(),initialize_socket_parameters),
   gen_server:enter_loop(?MODULE, [],State, timer:seconds(10)).
 
-
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
 
@@ -56,39 +55,32 @@ handle_info(initialize_socket_parameters, State) ->
   Socket = maps:get(socket,State),
   inet:setopts(Socket, [{active, ?ACTIVE_NUM},{packet, 4},{keepalive, true},binary]),
   {noreply,State};
-%%
-%%handle_info({tcp, Socket, Data}, #{socket := Socket} = Connection) ->
 
-%%try
-%%Message = decode:decode( Data ),
-%%Reply =  client_handle:handle(Message, State),
-%%lager:info_unsafe( "Client... received client message: ~p in State: ~p, Reply: ~p", [ Message, State, Reply ]),
-%%case Reply of
-%%NewClientState when erlang:is_map(NewClientState) ->
-%%{noreply, NewClientState};
-%%{reply,ReplyData} ->
-%%send_socket(State, ReplyData),
-%%{noreply, State};
-%%{reply, ReplyData, NewState} ->
-%%send_socket(State, ReplyData),
-%%{noreply, NewState};
-%%false ->
-%%{noreply, State};
-%%_ ->
-%%{noreply, State}
-%%end
-%%catch
-%%ErrorType:ErrorReason ->
-%%send_socket(State, client_handle:generate_terminate_connection(1)),
-%%lager:error( "ErrorType: ~p, ErrorReason: ~p, stacktrace: ~p", [ ErrorType, ErrorReason, erlang:get_stacktrace()]),
-%%{noreply, State}
-%%end;
-
+handle_info({tcp, Socket, BinarySocketData}, #{socket := Socket} = Connection) ->
+  try
+    Decoder = maps:get(decoder,Connection,decode),
+    Handler = maps:get(handler,Connection,handle),
+    Message = Decoder:decode(BinarySocketData),
+    case Handler:handle(Message,Connection) of
+      NewConnection when erlang:is_map(NewConnection) ->
+        {noreply, NewConnection};
+      {reply,Reply} when erlang:is_binary(Reply) orelse erlang:is_tuple(Reply) ->
+        send_reply(Connection, Reply),
+        {noreply, Connection};
+      {reply,Reply,NewConnection} when (erlang:is_binary(Reply) orelse erlang:is_tuple(Reply)) andalso erlang:is_map(NewConnection) ->
+        send_reply(NewConnection,Reply),
+        {noreply, NewConnection};
+      _ ->
+        {noreply,Connection}
+    end
+    catch
+      _ErrorType:_ErrorReason ->
+        {noreply, Connection}
+  end;
 
 handle_info({tcp_passive, Socket},
   #{socket := Socket,last_tcp_passive_milli_seconds := LastTcpPassiveMilliSeconds} = State)->
   NowMilliSeconds = erlang:system_time(milli_seconds),
-%%  AveragePacketsPerMilliSeconds = ?ACTIVE_NUM / ( NowMilliSeconds - LastTcpPassiveMilliSeconds ) ,
   ReceivedPacketsBetweenMilliSeconds = NowMilliSeconds - LastTcpPassiveMilliSeconds,
   case ReceivedPacketsBetweenMilliSeconds < ?CLOSE_SOCKET_PACKETS_THRESHOLD of
     true->
@@ -117,3 +109,10 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
+send_reply(Connection,Reply) when erlang:is_binary(Reply) ->
+  #{socket := Socket, transport := Transport} = Connection,
+  Transport:send(Socket, Reply);
+send_reply(Connection,Reply) when erlang:is_tuple(Reply) ->
+  #{encoder := Encoder} = Connection,
+  BinaryReply = Encoder:encode(Reply),
+  send_reply(Connection, BinaryReply).

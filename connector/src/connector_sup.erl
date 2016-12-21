@@ -30,8 +30,3 @@ init({RefName,ListenPort,AcceptorNum,CustomMapOpts}) ->
   CustomOpts = maps:merge(CustomMapOpts,#{ref_connection_sup => RefConnectionSupName}),
   ListenerSpec = ranch:child_spec(RefName, AcceptorNum, ranch_tcp, ListenerOptions, connection_sup,CustomOpts),
   {ok, {SupFlags, [ListenerSpec, ConnectionSup]}}.
-
-
-
-
-
