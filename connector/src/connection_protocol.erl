@@ -70,6 +70,10 @@ handle_info({tcp, Socket, BinarySocketData}, #{socket := Socket} = Connection) -
       {reply,Reply,NewConnection} when (erlang:is_binary(Reply) orelse erlang:is_tuple(Reply)) andalso erlang:is_map(NewConnection) ->
         send_reply(NewConnection,Reply),
         {noreply, NewConnection};
+      stop ->
+        {stop,normal, Connection};
+      {stop,Reason} ->
+        {stop,Reason, Connection};
       _ ->
         {noreply,Connection}
     end
