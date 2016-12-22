@@ -1,0 +1,16 @@
+= CardsGame
+
+This is a general Cards Game Framework
+
+== Goals
+
+CardsGame aims to provide a framework for general card game development in Erlang.
+
+
+== Compile and Run
+
+* TODO
+
+== Support
+
+* mailto: Anthony Jiang<2nth0nyj@gmail.com>
