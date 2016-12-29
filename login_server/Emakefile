@@ -1,0 +1,7 @@
+{"src/*",
+[{parse_transform, lager_transform},
+ {i,"include"},
+ {i, "../proto/include"},
+ {outdir,"ebin"},
+ verbose,
+ report]}.

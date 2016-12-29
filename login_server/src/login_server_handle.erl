@@ -4,8 +4,8 @@
 
 -export([handle/2]).
 
-handle(Message, Connection) when erlang:is_record(cl_login, Message) ->
-  #cl_login{how = How, parameters = QuickLoginDeviceString} = Message,
+handle(Message, _Connection) when erlang:is_record(Message, cl_login)->
+  #cl_login{how = How, parameters = _QuickLoginDeviceString} = Message,
   case How of
     0 ->
       ok;

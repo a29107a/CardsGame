@@ -1,5 +1,6 @@
 #!/bin/sh
 
+[ -d ebin ] || mkdir -pv ebin
 [ -d include ] || mkdir -pv include
 [ -d src/pb ] || mkdir -pv src/pb
 

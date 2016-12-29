@@ -8,7 +8,7 @@ start_link() ->
   supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 start_link(RefName,ListenPort, AcceptorNum,Handler) ->
-  RefSupName = erlang:list_to_atom( erlang:atom_to_list(RefName) ++ "_sup"),
+  RefSupName = erlang:list_to_atom( erlang:atom_to_list(RefName) ++ "_connector_sup"),
   supervisor:start_link({local,RefSupName},?MODULE,{RefName,ListenPort,AcceptorNum,Handler}).
 
 init([]) ->
