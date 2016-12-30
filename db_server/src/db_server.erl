@@ -36,4 +36,13 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 establish_db_connection() ->
+  {ok,ConfigList} = file:consult("config/db.config"),
+  lists:foreach(fun({_DatabaseName,DatabaseConnectionConfig}) ->
+      Seed = proplists:get_value(seed,DatabaseConnectionConfig,{single,"127.0.0.1:27017"}),
+    ConnectionList = proplists:get_value(connection, DatabaseConnectionConfig, []),
+    WorkerOptions = proplists:get_value(worker_options, DatabaseConnectionConfig,[{database,<<"test">>}]),
+    {ok, _} = mongoc:connect(Seed, ConnectionList,WorkerOptions)
+                end,
+    ConfigList).
+
 

@@ -1,17 +1,11 @@
 -module(db_sup).
-
 -behaviour(supervisor).
 
 -export([start_link/0]).
-
 -export([init/1]).
 
--define(SERVER, ?MODULE).
-
--spec(start_link() ->
-  {ok, Pid :: pid()} | ignore | {error, Reason :: term()}).
 start_link() ->
-  supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+  supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
   RestartStrategy = one_for_one,
