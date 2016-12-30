@@ -1,0 +1,6 @@
+{"src/*",
+[{i,"include"},
+ {i, "../proto/include"},
+ {outdir,"ebin"},
+ verbose,
+ report]}.

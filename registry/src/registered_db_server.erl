@@ -22,6 +22,34 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
   {noreply, State}.
 
+handle_info({register_login_db_node,LoginDbNode},State) ->
+  OldList = maps:get(login_db_node_list,State,[]),
+  NewList =
+    case lists:member(LoginDbNode,OldList) of
+      true ->
+        OldList;
+      false ->
+        erlang:monitor_node(LoginDbNode,true),
+        [LoginDbNode|OldList]
+    end,
+  NewState = maps:put(login_db_node_list,NewList,State),
+  {noreply, NewState};
+
+handle_info({request_a_login_db_node,Requester},State) ->
+  LoginNodeList = maps:get(login_db_node_list,State, []),
+  case LoginNodeList of
+    [] ->
+      erlang:send(Requester,{error, no_available_db_node});
+    _ ->
+      LoginDbNode = lists:nth(rand:uniform(erlang:length(LoginNodeList)), LoginNodeList),
+      erlang:send(Requester, {one_node,LoginDbNode})
+  end,
+  {noreply,State};
+
+handle_info({nodedown,Node}, State) ->
+  NewState = maps:update(login_db_node_list,fun(OldList) -> lists:delete(Node, OldList) end, State),
+  {noreply, NewState};
+
 handle_info(_Info, State) ->
   {noreply, State}.
 
