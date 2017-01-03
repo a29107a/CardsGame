@@ -46,6 +46,11 @@ handle_info({request_a_login_db_node,Requester},State) ->
   end,
   {noreply,State};
 
+handle_info({request_login_db_nodes,Requester}, State) ->
+  LoginNodeList = maps:get(login_db_node_list,State, []),
+  erlang:send(Requester, {to_agent, login_db_nodes, LoginNodeList}),
+  {noreply, State};
+
 handle_info({nodedown,Node}, State) ->
   NewState = maps:update(login_db_node_list,fun(OldList) -> lists:delete(Node, OldList) end, State),
   {noreply, NewState};

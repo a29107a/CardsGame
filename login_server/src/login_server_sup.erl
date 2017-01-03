@@ -14,8 +14,12 @@ init([]) ->
   Restart = permanent,
   Shutdown = 10000,
   Type = worker,
-  AChild = {'login_config_server',
+  LoginConfigServer = {'login_config_server',
     {'login_config_server', start_link, []},
     Restart, Shutdown, Type,
     ['login_config_server']},
-  {ok, {SupFlags, [AChild]}}.
+  RegistryServerAgent = {'registry_server_agent',
+    {'registry_server_agent', start_link, []},
+    Restart, Shutdown, Type,
+    ['registry_server_agent']},
+  {ok, {SupFlags, [LoginConfigServer,RegistryServerAgent]}}.
