@@ -1,6 +1,7 @@
--module(registry_server_agent).
+-module(login_server_registry_agent).
 -behaviour(gen_server).
 
+-export([get_one_db_node/0]).
 -export([start_link/0]).
 
 -export([init/1,
@@ -10,6 +11,16 @@
   terminate/2,
   code_change/3]).
 
+get_one_db_node() ->
+  case gen_server:call(?MODULE, get_one_db_node,timer:seconds(30)) of
+    [] ->
+      erlang:exit(erlang:self(),normal);
+    Lists when erlang:length(Lists) > 0 ->
+      lists:nth(rand:uniform(erlang:length(Lists)), Lists);
+    _ ->
+      erlang:exit(erlang:self(), normal)
+  end.
+
 start_link() ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
@@ -18,6 +29,10 @@ init([]) ->
   load_db_nodes(),
   erlang:send_after(timer:hours(2),erlang:self(),refresh_db_nodes),
   {ok, #{}}.
+
+handle_call(get_one_login_db_node,_From,State) ->
+  LoginDbNodes = maps:get(login_db_nodes,State, []),
+  {reply, LoginDbNodes, State};
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.

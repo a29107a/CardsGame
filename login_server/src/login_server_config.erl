@@ -1,4 +1,4 @@
--module(login_config_server).
+-module(login_server_config).
 -behaviour(gen_server).
 
 -export([reload/0, get/1]).

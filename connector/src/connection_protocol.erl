@@ -44,6 +44,7 @@ init(Ref, Socket, Transport, Opts) ->
     last_heart_beat => ThisMilliSeconds},
   ConnectionMap = maps:merge(ScoketStateMap,Opts),
   erlang:send(erlang:self(),initialize_socket_parameters),
+  erlang:send(erlang:self(),{use_handler,custom_initialization}),
   gen_server:enter_loop(?MODULE, [],ConnectionMap, timer:seconds(10)).
 
 handle_call(_Request, _From, State) ->
@@ -57,26 +58,19 @@ handle_info(initialize_socket_parameters, State) ->
   inet:setopts(Socket, [{active, ?ACTIVE_NUM},{packet, 4},{keepalive, true},binary]),
   {noreply,State};
 
+handle_info({use_handler,Message},Connection) ->
+  try
+      handle(Message,Connection)
+  catch
+      _ErrorType:_ErrorReason ->
+        {noreply, Connection}
+  end;
+
 handle_info({tcp, Socket, BinarySocketData}, #{socket := Socket} = Connection) ->
   try
-    #{decoder := Decoder, handler := Handler} = Connection,
+    Decoder = maps:get(decoder,Connection),
     Message = Decoder:decode(BinarySocketData),
-    case Handler:handle(Message,Connection) of
-      NewConnection when erlang:is_map(NewConnection) ->
-        {noreply, NewConnection};
-      {reply,Reply} when erlang:is_binary(Reply) orelse erlang:is_tuple(Reply) ->
-        send_reply(Connection, Reply),
-        {noreply, Connection};
-      {reply,Reply,NewConnection} when (erlang:is_binary(Reply) orelse erlang:is_tuple(Reply)) andalso erlang:is_map(NewConnection) ->
-        send_reply(NewConnection,Reply),
-        {noreply, NewConnection};
-      stop ->
-        {stop,normal, Connection};
-      {stop,Reason} ->
-        {stop,Reason, Connection};
-      _ ->
-        {noreply,Connection}
-    end
+    handle(Message, Connection)
     catch
       _ErrorType:_ErrorReason ->
         {noreply, Connection}
@@ -120,3 +114,20 @@ send_reply(Connection,Reply) when erlang:is_tuple(Reply) ->
   Encoder = maps:get(encoder,Connection),
   BinaryReply = Encoder:encode(Reply),
   send_reply(Connection, BinaryReply).
+
+handle(Message, Connection) ->
+  Handler = maps:get(handler,Connection),
+  case Handler:handle(Message,Connection) of
+    NewConnection when erlang:is_map(NewConnection) ->
+      {noreply, NewConnection};
+    {reply,Reply} when erlang:is_binary(Reply) orelse erlang:is_tuple(Reply) ->
+      send_reply(Connection, Reply),
+      {noreply, Connection};
+    {reply,Reply,NewConnection} when (erlang:is_binary(Reply) orelse erlang:is_tuple(Reply)) andalso erlang:is_map(NewConnection) ->
+      send_reply(NewConnection,Reply),
+      {noreply, NewConnection};
+    stop ->
+      {stop,normal, Connection};
+    {stop,Reason} ->
+      {stop,Reason, Connection}
+  end.

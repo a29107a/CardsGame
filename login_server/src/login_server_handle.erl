@@ -4,6 +4,12 @@
 
 -export([handle/2]).
 
+
+handle(custom_initialization,Connection) ->
+  OneDbNode = login_server_registry_agent:get_one_db_node(),
+  Connection1 = maps:put(db_node,OneDbNode, Connection),
+  Connection1;
+
 handle(Message, _Connection) when erlang:is_record(Message, cl_login)->
   #cl_login{how = How, parameters = _QuickLoginDeviceString} = Message,
   case How of
