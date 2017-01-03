@@ -3,8 +3,10 @@
 -compile(export_all).
 
 start_db_server() ->
+  ok = erlang:element(1, application:ensure_all_started(lager)),
   try_to_register_db_node_to_regitry_node(),
-  ok = erlang:element(1, application:ensure_all_started(db)).
+  ok = erlang:element(1, application:ensure_all_started(db)),
+  lager:info( "DbNode: ~p started. ", [erlang:node()]).
 
 try_to_register_db_node_to_regitry_node() ->
   {ok, ConfigList} = file:consult("config/db_server.config"),

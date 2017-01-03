@@ -101,7 +101,9 @@ handle_info(timeout, State) ->
 handle_info(_Info, State) ->
   {noreply, State}.
 
-terminate(_Reason, _State) ->
+terminate(Reason,State) ->
+  TerminateHandler = maps:get(terminate, State,0),
+  TerminateHandler:terminate(Reason, State),
   ok.
 
 code_change(_OldVsn, State, _Extra) ->

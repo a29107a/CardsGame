@@ -12,7 +12,7 @@
   code_change/3]).
 
 get_one_db_node() ->
-  case gen_server:call(?MODULE, get_one_db_node,timer:seconds(30)) of
+  case gen_server:call(?MODULE, get_login_db_nodes,timer:seconds(30)) of
     [] ->
       erlang:exit(erlang:self(),normal);
     Lists when erlang:length(Lists) > 0 ->
@@ -27,10 +27,10 @@ start_link() ->
 init([]) ->
   ets:new(db_nodes,[named_table,{keypos, 2}]),
   load_db_nodes(),
-  erlang:send_after(timer:hours(2),erlang:self(),refresh_db_nodes),
+  erlang:send_after(timer:seconds(2),erlang:self(),refresh_db_nodes),
   {ok, #{}}.
 
-handle_call(get_one_login_db_node,_From,State) ->
+handle_call(get_login_db_nodes,_From,State) ->
   LoginDbNodes = maps:get(login_db_nodes,State, []),
   {reply, LoginDbNodes, State};
 
@@ -49,8 +49,12 @@ handle_info(manual_refersh, State) ->
   load_db_nodes(),
   {noreply, State};
 
-handle_info({to_agent, login_db_nodes, LoginNodeList}, State) ->
-  NewState = State#{login_db_nodes => LoginNodeList},
+handle_info({to_agent, login_db_nodes, LoginDbNodeList}, State) ->
+  NewState =
+    maps:update_with(login_db_nodes,
+      fun(OldList) -> lists:usort(LoginDbNodeList ++ OldList) end,
+      LoginDbNodeList,
+      State),
   {noreply, NewState};
 
 handle_info(_Info, State) ->
@@ -65,4 +69,7 @@ code_change(_OldVsn, State, _Extra) ->
 load_db_nodes() ->
   {ok, ConfigList} = file:consult("config/login_server.config"),
   RegistryNodes = proplists:get_value(registry_node_list,ConfigList),
-  rpc:cast(RegistryNodes,registered_db_server, {request_login_db_nodes,erlang:self()}).
+  lists:foreach(fun(RegistryNode) ->
+    erlang:send({registered_db_server, RegistryNode},{request_login_db_nodes,erlang:self()})
+                end,
+    RegistryNodes).

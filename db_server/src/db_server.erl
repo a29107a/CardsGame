@@ -38,10 +38,15 @@ code_change(_OldVsn, State, _Extra) ->
 establish_db_connection() ->
   {ok,ConfigList} = file:consult("config/db.config"),
   lists:foreach(fun({_DatabaseName,DatabaseConnectionConfig}) ->
-      Seed = proplists:get_value(seed,DatabaseConnectionConfig,{single,"127.0.0.1:27017"}),
+    Seed = proplists:get_value(seed,DatabaseConnectionConfig,{single,"127.0.0.1:27017"}),
     ConnectionList = proplists:get_value(connection, DatabaseConnectionConfig, []),
     WorkerOptions = proplists:get_value(worker_options, DatabaseConnectionConfig,[{database,<<"test">>}]),
-    {ok, _} = mongoc:connect(Seed, ConnectionList,WorkerOptions)
+    IndexOptions = proplists:get_value(index_options,DatabaseConnectionConfig,[]),
+    {ok, TopologyPid} = mongoc:connect(Seed, ConnectionList,WorkerOptions),
+    lists:foreach(fun({IndexCollection, Index}) ->
+      mongo_api:ensure_index(TopologyPid, IndexCollection, Index)
+                  end,
+      IndexOptions)
                 end,
     ConfigList).
 
