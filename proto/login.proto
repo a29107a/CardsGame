@@ -8,7 +8,8 @@ message account_info{
 }
 
 message lc_login_result{//1002
-    required int32 error_code = 1;
+    required int32 error_code = 1; //1 db error.
+                                   //2 not supported platform.
     optional int64 account_id = 2;
     optional account_info account_info = 3;
 }
