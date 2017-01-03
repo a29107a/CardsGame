@@ -1,5 +1,5 @@
 message cl_login{//1001
-    required int32 how = 1;
+    required int32 platform_id = 1; //0, quick login with device uuid.
     required string parameters = 2;
 }
 

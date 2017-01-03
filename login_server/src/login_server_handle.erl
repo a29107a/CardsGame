@@ -15,8 +15,8 @@ handle2(custom_initialization,Connection) ->
   Connection1;
 
 handle2(Message, _Connection) when erlang:is_record(Message, cl_login)->
-  #cl_login{how = How, parameters = _QuickLoginDeviceString} = Message,
-  case How of
+  #cl_login{platform_id = PlatformId, parameters = _QuickLoginDeviceString} = Message,
+  case PlatformId of
     0 ->
       ok;
     _ ->
