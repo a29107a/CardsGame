@@ -20,7 +20,7 @@ get() ->
   gen_server:call(?MODULE, get).
 
 start_link() ->
-  gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+  gen_server:start_link({local, ?MODULE}, ?MODULE, [], [{priority, high}]).
 
 init([]) ->
   SystemTimeMilliseconds = erlang:system_time(milli_seconds),
