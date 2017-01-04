@@ -24,12 +24,18 @@ handle2(Message, Connection) when erlang:is_record(Message, cl_login)->
         OneMap when erlang:is_map(OneMap) ->
           AccountId = maps:get(account_id, OneMap),
           AccountInfo = #account_info{account_id = AccountId},
-          {reply, #lc_login_result{error_code = 0, account_id = AccountId, account_info = AccountInfo}};
+          AccountProcessName = login_server_utils:account_id_to_login_process_name(AccountId),
+          case global:register_name(AccountProcessName, erlang:self()) of
+            yes ->
+              {reply, #lc_login_result{error_code = 0, account_id = AccountId, account_info = AccountInfo}};
+            no ->
+              {stop, #lc_login_result{error_code = 1}}
+          end;
         {} ->
           CreateMaps = #{platform_id => PlatformId,account_name => QuickLoginDeviceString},
           case rpc:call(DbNode,db_login_account,create_account, [CreateMaps]) of
             false ->
-              {reply, #lc_login_result{error_code = 1}};
+              {reply, #lc_login_result{error_code = 2}};
             {true,OneMap} ->
               AccountId = maps:get(account_id, OneMap),
               AccountInfo = #account_info{account_id = AccountId},
@@ -37,5 +43,5 @@ handle2(Message, Connection) when erlang:is_record(Message, cl_login)->
           end
       end;
     _ ->
-      {reply, #lc_login_result{error_code=2}}
+      {reply, #lc_login_result{error_code=3}}
   end.

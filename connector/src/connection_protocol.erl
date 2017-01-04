@@ -109,14 +109,6 @@ terminate(Reason,State) ->
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
-send_reply(Connection,Reply) when erlang:is_binary(Reply) ->
-  #{socket := Socket, transport := Transport} = Connection,
-  Transport:send(Socket, Reply);
-send_reply(Connection,Reply) when erlang:is_tuple(Reply) ->
-  Encoder = maps:get(encoder,Connection),
-  BinaryReply = Encoder:encode(Reply),
-  send_reply(Connection, BinaryReply).
-
 handle(Message, Connection) ->
   Handler = maps:get(handler,Connection),
   case Handler:handle(Message,Connection) of
@@ -128,8 +120,22 @@ handle(Message, Connection) ->
     {reply,Reply,NewConnection} when (erlang:is_binary(Reply) orelse erlang:is_tuple(Reply)) andalso erlang:is_map(NewConnection) ->
       send_reply(NewConnection,Reply),
       {noreply, NewConnection};
+    {stop,Reply} when erlang:is_binary(Reply) orelse erlang:is_tuple(Reply) ->
+      send_reply(Connection, Reply),
+      {stop,normal,Connection};
+    {stop,Reply,NewConnection} when (erlang:is_binary(Reply) orelse erlang:is_tuple(Reply)) andalso erlang:is_map(NewConnection) ->
+      send_reply(NewConnection,Reply),
+      {stop, normal,NewConnection};
     stop ->
       {stop,normal, Connection};
     {stop,Reason} ->
       {stop,Reason, Connection}
   end.
+
+send_reply(Connection,Reply) when erlang:is_binary(Reply) ->
+  #{socket := Socket, transport := Transport} = Connection,
+  Transport:send(Socket, Reply);
+send_reply(Connection,Reply) when erlang:is_tuple(Reply) ->
+  Encoder = maps:get(encoder,Connection),
+  BinaryReply = Encoder:encode(Reply),
+  send_reply(Connection, BinaryReply).
