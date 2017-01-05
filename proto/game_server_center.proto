@@ -1,0 +1,12 @@
+message address{
+    required string ip = 1;
+    required int32 port = 2;
+}
+
+message gl_register_game_server{
+    required int32 game_id = 1;
+    required int32 game_name = 2;
+    required int32 game_type = 3;
+    repeated address address = 4;
+    optional int32 game_server_status = 5;
+}

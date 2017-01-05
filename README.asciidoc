@@ -9,8 +9,7 @@ CardsGame aims to provide a framework for general card game development in Erlan
 
 == Compile and Run
 
-* TODO
 
-== Support
+== Architecture
 
-* mailto: Anthony Jiang<2nth0nyj@gmail.com>
+Please review doc/architecture.png.

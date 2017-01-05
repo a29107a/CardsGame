@@ -15,10 +15,10 @@ init([]) ->
   Shutdown = 10000,
   Type = worker,
   LoginConfigServer = {
-    'login_server_config',
-    {'login_server_config', start_link, []},
+    'config_server',
+    {'config_server', start_link, [login_server_config, "config/login_server.config"]},
     Restart, Shutdown, Type,
-    ['login_server_config']
+    ['config_server']
   },
   RegistryServerAgent = {
     'login_server_registry_agent',

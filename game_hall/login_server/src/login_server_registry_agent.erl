@@ -2,6 +2,7 @@
 -behaviour(gen_server).
 
 -export([get_one_db_node/0]).
+-export([get_game_center_nodes/0]).
 -export([start_link/0]).
 
 -export([init/1,
@@ -21,18 +22,33 @@ get_one_db_node() ->
       erlang:exit(erlang:self(), normal)
   end.
 
+get_game_center_nodes() ->
+  case gen_server:call(?MODULE, get_game_center_nodes,timer:seconds(30)) of
+    [] ->
+      erlang:exit(erlang:self(),normal);
+    Lists when erlang:length(Lists) > 0 ->
+      lists:nth(rand:uniform(erlang:length(Lists)), Lists);
+    _ ->
+      erlang:exit(erlang:self(), normal)
+  end.
+
+
 start_link() ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
   ets:new(db_nodes,[named_table,{keypos, 2}]),
-  load_db_nodes(),
-  erlang:send_after(timer:seconds(2),erlang:self(),refresh_db_nodes),
+  reload(),
+  erlang:send_after(timer:seconds(2),erlang:self(),refresh),
   {ok, #{}}.
 
 handle_call(get_login_db_nodes,_From,State) ->
   LoginDbNodes = maps:get(login_db_nodes,State, []),
   {reply, LoginDbNodes, State};
+
+handle_call(get_game_center_nodes, _From, State) ->
+  GameCenterNodes =maps:get(game_center_nodes, State, []),
+  {reply, GameCenterNodes, State};
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
@@ -40,13 +56,13 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
   {noreply, State}.
 
-handle_info(refresh_db_nodes,State) ->
-  erlang:send_after(timer:hours(2),erlang:self(),refresh_db_nodes),
-  load_db_nodes(),
+handle_info(refresh,State) ->
+  erlang:send_after(timer:hours(2),erlang:self(),refresh),
+  reload(),
   {noreply, State};
 
 handle_info(manual_refersh, State) ->
-  load_db_nodes(),
+  reload(),
   {noreply, State};
 
 handle_info({to_agent, login_db_nodes, LoginDbNodeList}, State) ->
@@ -54,6 +70,14 @@ handle_info({to_agent, login_db_nodes, LoginDbNodeList}, State) ->
     maps:update_with(login_db_nodes,
       fun(OldList) -> lists:usort(LoginDbNodeList ++ OldList) end,
       LoginDbNodeList,
+      State),
+  {noreply, NewState};
+
+handle_info({to_agent, game_center_nodes, GameServerCenterNodeList}, State) ->
+  NewState =
+    maps:update_with(game_center_nodes,
+      fun(OldList) -> lists:usort(GameServerCenterNodeList ++ OldList) end,
+      GameServerCenterNodeList,
       State),
   {noreply, NewState};
 
@@ -66,10 +90,12 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
-load_db_nodes() ->
+reload() ->
   {ok, ConfigList} = file:consult("config/login_server.config"),
   RegistryNodes = proplists:get_value(registry_node_list,ConfigList),
   lists:foreach(fun(RegistryNode) ->
-    erlang:send({registered_db_server, RegistryNode},{request_login_db_nodes,erlang:self()})
+    SelfPid = erlang:self(),
+    erlang:send({registered_db_server, RegistryNode},{request_login_db_nodes,SelfPid}),
+    erlang:send({registered_game_server_center,RegistryNode},{request_game_server_center_nodes,SelfPid})
                 end,
     RegistryNodes).

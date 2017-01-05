@@ -24,7 +24,7 @@ start_link() ->
 
 init([]) ->
   SystemTimeMilliseconds = erlang:system_time(milli_seconds),
-  MachineCode = login_server_config:get(login_server_id),
+  MachineCode = config_server:get(login_server_config,login_server_id),
   Sequence = 0,
   MaxSequence = erlang:round(math:pow(2,?SEQUENCE_BIT_LENGTH)),
   State = #{system_time_milli_seconds => SystemTimeMilliseconds,machine_code => MachineCode,sequence => Sequence, max_sequence => MaxSequence},

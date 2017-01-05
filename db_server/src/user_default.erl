@@ -4,38 +4,12 @@
 
 start_db_server() ->
   ok = erlang:element(1, application:ensure_all_started(lager)),
-  try_to_register_db_node_to_regitry_node(),
+  register_to_registry_node(),
   ok = erlang:element(1, application:ensure_all_started(db)),
   lager:info( "DbNode: ~p started. ", [erlang:node()]).
 
-try_to_register_db_node_to_regitry_node() ->
+register_to_registry_node() ->
   {ok, ConfigList} = file:consult("config/db_server.config"),
   RegistryNodeList = proplists:get_value(registry_node_list,ConfigList, []),
-  case os:getenv("DEBUG") of
-    false ->
-      case RegistryNodeList of
-        [] ->
-          erlang:halt('Cannot register to registry node.');
-        _ ->
-          PongCount=
-            lists:foldl(fun(RegisterNode, Acc) ->
-              case net_adm:ping(RegisterNode) of
-                pong ->
-                  erlang:send({registered_db_server,RegisterNode},{register_login_db_node,erlang:node()}),
-                  Acc + 1;
-                pang ->
-                  Acc
-              end
-                        end,
-              0,
-              RegistryNodeList),
-          case PongCount > 0 of
-            true ->
-              next;
-            false ->
-              erlang:halt('Cannot register to any regitry node.')
-          end
-      end;
-    _ ->
-      ignore
-  end.
+  RegisterInfo = {register_login_db_node,erlang:node()},
+  register_to_registry_node:register(RegistryNodeList,registered_db_server,RegisterInfo).

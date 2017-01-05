@@ -19,7 +19,13 @@ init([]) ->
   Shutdown = 20000,
   Type = worker,
 
-  RegistedDbServer = {'registered_db_server', {'registered_db_server', start_link, []},
+  RegisteredDbServer = {
+    'registered_db_server',
+    {'registered_db_server', start_link, []},
     Restart, Shutdown, Type, ['registered_db_server']},
-
-  {ok, {SupFlags, [RegistedDbServer]}}.
+  RegisteredGameServerCenter = {
+    registered_game_server_center,
+    {registered_game_server_center,start_link, []},
+    Restart, Shutdown, Type, [registered_game_server_center]
+    },
+  {ok, {SupFlags, [RegisteredDbServer, RegisteredGameServerCenter]}}.

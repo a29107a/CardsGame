@@ -2,7 +2,7 @@
 -export([start/0]).
 
 start() ->
-  ListenPort = login_server_config:get(listen_port),
+  ListenPort = config_server:get(login_server_config,listen_port),
   AcceptorNum = utilities:get_cpu_num() * 8,
   CustomOpts = #{
     encoder => pb_codec,
