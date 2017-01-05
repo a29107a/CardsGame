@@ -27,7 +27,7 @@ init([]) ->
   },
   GameServerCenterTable = {
     'game_server_center_table',
-    {'game_server_center_table', start_link(), []},
+    {'game_server_center_table', start_link, []},
     Restart, Shutdown, Type, ['game_server_center_table']
   },
   {ok, {SupFlags, [GameServerAgentConfig, GameServerCenterTable]}}.

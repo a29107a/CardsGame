@@ -1,4 +1,4 @@
-{application, game_server_agent, [
+{application, game_server_center, [
   {description, ""},
   {vsn, "1"},
   {registered, []},
