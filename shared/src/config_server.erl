@@ -1,8 +1,8 @@
 -module(config_server).
 -behaviour(gen_server).
 
--export([reload/0, get/2]).
--export([start_link/0,start_link/2]).
+-export([reload/0, get/2,global_get/2]).
+-export([start_link/0,start_link/2,start_link/3]).
 
 -export([init/1,
   handle_call/3,
@@ -18,11 +18,20 @@ get(ConfigServerName,Key) ->
   Config = gen_server:call(ConfigServerName, get_state, timer:minutes(1)),
   maps:get(Key, Config).
 
+global_get(ConfigServerName, Key) ->
+  Config = gen_server:call({global, ConfigServerName},get_state,timer:minutes(1)),
+  maps:get(Key, Config).
+
 start_link() ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 start_link(ConfigServerName, ConfigFilePath) ->
   gen_server:start_link({local, ConfigServerName},?MODULE, ConfigFilePath, []).
+
+start_link(GlobalOrLocal, ConfigServerName, ConfigFilePath) when GlobalOrLocal =:= global orelse GlobalOrLocal =:= local ->
+  gen_server:start_link({GlobalOrLocal,ConfigServerName}, ?MODULE, ConfigFilePath, []);
+start_link(_GlobalOrLocal, ConfigServerName, ConfigFilePath) ->
+  start_link(ConfigServerName, ConfigFilePath).
 
 init([]) ->
   {ok, maps:new()};

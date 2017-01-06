@@ -18,8 +18,24 @@ init([]) ->
   Shutdown = 20000,
   Type = worker,
 
-  GameCenterAgentConfigServer = {'game_center_agent_config_server', {'game_center_agent_config_server', start_link, []}, Restart, Shutdown, Type, ['game_center_agent_config_server']},
-  GameCenterAgentConnection = {'game_center_agent_connection', {'game_center_agent_connection', start_link, []}, Restart, Shutdown, Type, ['game_center_agent_connection']},
-
-  {ok, {SupFlags, [GameCenterAgentConfigServer, GameCenterAgentConnection]}}.
+  GameCenterAgentConfigServer = {'game_center_agent_config_server',
+    {'config_server', start_link, [global,game_center_agent_config_server,"config/game_center_agent.config"]},
+    Restart, Shutdown, Type, ['game_center_agent_config_server']},
+  GameCenterAgentConnection = {'game_center_agent_connection',
+    {'game_center_agent_connection', start_link, []},
+    Restart, Shutdown, Type, ['game_center_agent_connection']},
+  GameNodeManager = {game_node_manager,
+    {game_node_manager,start_link,[]},
+    Restart, Shutdown, Type, [game_node_manager]},
+  GatewayNodeManager = {gateway_node_manager,
+    {gateway_node_manager, start_link, []},
+    Restart, Shutdown, Type, [gateway_node_manager]
+    },
+  Children = [
+    GameCenterAgentConfigServer,
+    GameCenterAgentConnection,
+    GameNodeManager,
+    GatewayNodeManager
+  ],
+  {ok, {SupFlags, Children}}.
 

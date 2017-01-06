@@ -15,7 +15,14 @@ start_link() ->
   gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
-  {ok, #{}}.
+  {Ip,Port} = config_server:global_get(game_center_agent_config_server, game_center_address),
+  case gen_tcp:connect(Ip,Port,[]) of
+    {ok, Socket} ->
+      {ok, #{socket => Socket}};
+    {error, Reason} ->
+      lager:error( "Cannot connector to ~p:~p with error reason: ~p", [Ip, Port,Reason]),
+      {stop, Reason}
+  end.
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
