@@ -31,6 +31,10 @@ init([]) ->
     {gateway_node_manager, start_link, []},
     Restart, Shutdown, Type, [gateway_node_manager]
     },
+  GameCenterAgentRegister = { game_center_agent_register,
+    {game_center_agent_register, start_link, []},
+    Restart, Shutdown, Type, [game_center_agent_register]
+  },
   GameSessionServer = {game_session_server,
     {game_session_server,start_link, []},
     Restart, Shutdown, Type, [game_session_server]
@@ -40,6 +44,7 @@ init([]) ->
     GameCenterAgentConnection,
     GameNodeManager,
     GatewayNodeManager,
+    GameCenterAgentRegister,
     GameSessionServer
   ],
   {ok, {SupFlags, Children}}.
