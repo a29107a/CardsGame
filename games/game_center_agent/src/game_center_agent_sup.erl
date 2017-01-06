@@ -31,11 +31,16 @@ init([]) ->
     {gateway_node_manager, start_link, []},
     Restart, Shutdown, Type, [gateway_node_manager]
     },
+  GameSessionServer = {game_session_server,
+    {game_session_server,start_link, []},
+    Restart, Shutdown, Type, [game_session_server]
+    },
   Children = [
     GameCenterAgentConfigServer,
     GameCenterAgentConnection,
     GameNodeManager,
-    GatewayNodeManager
+    GatewayNodeManager,
+    GameSessionServer
   ],
   {ok, {SupFlags, Children}}.
 
