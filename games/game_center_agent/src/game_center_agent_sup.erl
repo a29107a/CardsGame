@@ -1,0 +1,25 @@
+-module(game_center_agent_sup).
+-behaviour(supervisor).
+-export([start_link/0]).
+
+-export([init/1]).
+
+start_link() ->
+  supervisor:start_link({global, ?MODULE}, ?MODULE, []).
+
+init([]) ->
+  RestartStrategy = one_for_one,
+  MaxRestarts = 10000,
+  MaxSecondsBetweenRestarts = 36000,
+
+  SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
+
+  Restart = permanent,
+  Shutdown = 20000,
+  Type = worker,
+
+  GameCenterAgentConfigServer = {'game_center_agent_config_server', {'game_center_agent_config_server', start_link, []}, Restart, Shutdown, Type, ['game_center_agent_config_server']},
+  GameCenterAgentConnection = {'game_center_agent_connection', {'game_center_agent_connection', start_link, []}, Restart, Shutdown, Type, ['game_center_agent_connection']},
+
+  {ok, {SupFlags, [GameCenterAgentConfigServer, GameCenterAgentConnection]}}.
+
