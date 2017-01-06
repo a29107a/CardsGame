@@ -10,9 +10,9 @@ handle(Message,Connection) ->
 
 
 handle2(custom_initialization,Connection) ->
-  OneDbNode = login_server_registry_agent:get_one_db_node(),
-  Connection1 = maps:put(db_node,OneDbNode, Connection),
-  Connection1;
+  OneService= login_server_registry_agent:get_one_service(),
+  #{one_login_db_node := OneDbNode, one_game_center_node := OneGameCenterNode} = OneService,
+  Connection#{db_node => OneDbNode, game_center_node => OneGameCenterNode};
 
 handle2(Message, Connection) when erlang:is_record(Message, cl_login)->
   #cl_login{platform_id = PlatformId, parameters = QuickLoginDeviceString} = Message,
@@ -44,4 +44,42 @@ handle2(Message, Connection) when erlang:is_record(Message, cl_login)->
       end;
     _ ->
       {reply, #lc_login_result{error_code=3}}
-  end.
+  end;
+
+handle2(Message, Connection) when erlang:is_record(Message, cl_fetch_game_server_list) ->
+  #{game_center_node := GameCenterNode, ip := IpStringBinary } = Connection,
+  case rpc:call(GameCenterNode,game_server_center_table,get_all, [ IpStringBinary ]) of
+    List when erlang:is_list(List) ->
+      GameServers = [
+        #game_server_info{
+          server_game_id = GameId,
+          server_game_type = GameType,
+          server_name = GameName
+          } ||
+        #{ game_id := GameId,
+        game_name :=  GameName,
+        game_type := GameType,
+        address := _Address} <- List ],
+      {reply,#lc_fetched_game_server_list{error_code = 0,game_servers = GameServers},Connection#{game_servers => List}};
+    _ ->
+      {stop, #lc_fetched_game_server_list{error_code = 1}}
+  end;
+
+handle2(Message,Connection) when erlang:is_record(Message, cl_select_game_server) ->
+  #cl_select_game_server{game_id = GameId} = Message,
+  GameServers = maps:get(game_servers,Connection, []),
+  #{game_center_node := GameCenterNode} = Connection,
+  case lists:filter(fun(#{game_id := GameId}) -> true;(_) -> false end,GameServers) of
+    [GameServer] ->
+      #{address := Address} = GameServer,
+      {Ip, Port} = utilities:list_random_one(Address),
+      Token = uuid:to_string(uuid:uuid4()),
+      rpc:cast()%% ready to login.
+      timer:sleep(timer:seconds(2)),
+      {reply, #lc_select_game_server_result{error_code = 0,
+        ip = Ip,
+        port = Port,
+        login_game_server_token = Token}}
+    _ ->
+      {reply, #lc_select_game_server_result{error_code = 1}}
+  end;

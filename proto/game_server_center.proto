@@ -10,3 +10,8 @@ message gl_register_game_server{
     repeated address address = 4;
     optional int32 game_server_status = 5;
 }
+
+message lg_player_ready_to_login{
+    required int64 account_id;
+    required string token;
+}

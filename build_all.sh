@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 cd proto
-rm -frv include ebin
+rm -frv include ebin src/pb include
 sh generate_protocol.sh
 cd ..
 

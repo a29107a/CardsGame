@@ -1,1 +1,1 @@
-{"src/*",[verbose,{outdir,"ebin"}]}.
+{"src/*",[{i, "include"},verbose,{outdir,"ebin"}]}.

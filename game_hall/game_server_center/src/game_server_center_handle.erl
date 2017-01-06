@@ -1,6 +1,6 @@
 -module(game_server_center_handle).
 
--include("game_server_agent.hrl").
+-include("game_server_center.hrl").
 
 -export([handle/2]).
 
@@ -17,12 +17,14 @@ handle2(Message, Connection) when erlang:is_record(Message,gl_register_game_serv
     game_type = GameType,
     address = Address,
     game_server_status = GameServerStatus} = Message,
+  IpAndPortTuple = [{Ip,Port} || #address{ip = Ip, port = Port} <- Address ],
   GameServerMaps = #{
     game_id => GameId,
     game_name => unicode:characters_to_binary(GameName),
     game_type => GameType,
-    address => Address,
-    game_server_status => GameServerStatus
+    address => IpAndPortTuple,
+    game_server_status => GameServerStatus,
+    connection_pid => erlang:self()
   },
   erlang:send(game_server_agent_table,{new_game_server_maps,GameServerMaps}),
   maps:merge(Connection,GameServerMaps).

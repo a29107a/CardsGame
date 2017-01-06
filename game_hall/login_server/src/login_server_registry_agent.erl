@@ -2,7 +2,8 @@
 -behaviour(gen_server).
 
 -export([get_one_db_node/0]).
--export([get_game_center_nodes/0]).
+-export([get_one_game_center_node/0]).
+-export([get_one_service/0]).
 -export([start_link/0]).
 
 -export([init/1,
@@ -22,7 +23,7 @@ get_one_db_node() ->
       erlang:exit(erlang:self(), normal)
   end.
 
-get_game_center_nodes() ->
+get_one_game_center_node() ->
   case gen_server:call(?MODULE, get_game_center_nodes,timer:seconds(30)) of
     [] ->
       erlang:exit(erlang:self(),normal);
@@ -30,6 +31,17 @@ get_game_center_nodes() ->
       lists:nth(rand:uniform(erlang:length(Lists)), Lists);
     _ ->
       erlang:exit(erlang:self(), normal)
+  end.
+
+get_one_service() ->
+  case gen_server:call(?MODULE, get_game_center_nodes,timer:seconds(30)) of
+    OneMap when erlang:is_map(OneMap) ->
+      #{login_db_nodes := LoginDbNodes,game_center_nodes := GameCenterNodes} = OneMap,
+      OneLoginDbNode = utilities:list_random_one(LoginDbNodes),
+      OneGameCenterNode = utilities:list_random_one(GameCenterNodes),
+      #{one_login_db_node => OneLoginDbNode, one_game_center_node => OneGameCenterNode};
+    _ ->
+      maps:new()
   end.
 
 
@@ -49,6 +61,9 @@ handle_call(get_login_db_nodes,_From,State) ->
 handle_call(get_game_center_nodes, _From, State) ->
   GameCenterNodes =maps:get(game_center_nodes, State, []),
   {reply, GameCenterNodes, State};
+
+handle_call(get_one_service, _From, State) ->
+  {reply, State, State};
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
