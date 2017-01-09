@@ -1,0 +1,12 @@
+message cg_login{
+    required string session = 1;
+}
+
+message role{
+
+}
+
+message gc_login_result{
+    required int32 error_code = 1;
+    optional role role = 2;
+}

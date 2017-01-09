@@ -19,7 +19,7 @@ init([]) ->
 handle_call({register_a_gateway_node,Node, NodeInfo},_From, State) ->
   GatewayNodeList = maps:get(gateway_node_list, State, []),
   NewGatewayNodeList =
-  case lists:keymember(Node,1,NewGatewayNodeList) of
+  case lists:keymember(Node,1,GatewayNodeList) of
     true ->
       lists:keystore(Node,1, GatewayNodeList,{Node, NodeInfo});
     false ->
@@ -37,7 +37,7 @@ handle_cast(_Request, State) ->
 
 handle_info({nodedown, Node}, State) ->
   NewState = maps:update_with(gateway_node_list,
-    fun(OldList) -> lists:keydelete(Node, 1, OldList),
+    fun(OldList) -> lists:keydelete(Node, 1, OldList) end,
       State),
   {noreply, NewState};
 

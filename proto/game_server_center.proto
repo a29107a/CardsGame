@@ -12,6 +12,6 @@ message gl_register_game_server{
 }
 
 message lg_player_ready_to_login{
-    required int64 account_id;
-    required string token;
+    required int64 account_id = 1;
+    required string token = 2;
 }

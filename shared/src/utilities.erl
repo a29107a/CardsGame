@@ -23,8 +23,7 @@ list_random_one_with_weight(List) when erlang:length(List) > 0 ->
     0,
     List),
   R = rand:uniform(TotalWeight),
-  list_random_one_with_weight(WeightList, R).
-
+  list_random_one_with_weight(WeightList, R);
 list_random_one_with_weight(_) ->
   [].
 

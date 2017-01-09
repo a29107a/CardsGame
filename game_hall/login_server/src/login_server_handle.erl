@@ -63,23 +63,23 @@ handle2(Message, Connection) when erlang:is_record(Message, cl_fetch_game_server
       {reply,#lc_fetched_game_server_list{error_code = 0,game_servers = GameServers},Connection#{game_servers => List}};
     _ ->
       {stop, #lc_fetched_game_server_list{error_code = 1}}
-  end;
+  end.
 
-handle2(Message,Connection) when erlang:is_record(Message, cl_select_game_server) ->
-  #cl_select_game_server{game_id = GameId} = Message,
-  GameServers = maps:get(game_servers,Connection, []),
-  #{game_center_node := GameCenterNode} = Connection,
-  case lists:filter(fun(#{game_id := GameId}) -> true;(_) -> false end,GameServers) of
-    [GameServer] ->
-      #{address := Address} = GameServer,
-      {Ip, Port} = utilities:list_random_one(Address),
-      Token = uuid:to_string(uuid:uuid4()),
-      rpc:cast()%% ready to login.
-      timer:sleep(timer:seconds(2)),
-      {reply, #lc_select_game_server_result{error_code = 0,
-        ip = Ip,
-        port = Port,
-        login_game_server_token = Token}}
-    _ ->
-      {reply, #lc_select_game_server_result{error_code = 1}}
-  end;
+%%handle2(Message,Connection) when erlang:is_record(Message, cl_select_game_server) ->
+%%  #cl_select_game_server{game_id = GameId} = Message,
+%%  GameServers = maps:get(game_servers,Connection, []),
+%%  #{game_center_node := GameCenterNode} = Connection,
+%%  case lists:filter(fun(#{game_id := GameId}) -> true;(_) -> false end,GameServers) of
+%%    [GameServer] ->
+%%      #{address := Address} = GameServer,
+%%      {Ip, Port} = utilities:list_random_one(Address),
+%%      Token = uuid:to_string(uuid:uuid4()),
+%%%%      rpc:cast()%% ready to login.
+%%      timer:sleep(timer:seconds(2)),
+%%      {reply, #lc_select_game_server_result{error_code = 0,
+%%        ip = Ip,
+%%        port = Port,
+%%        login_game_server_token = Token}};
+%%    _ ->
+%%      {reply, #lc_select_game_server_result{error_code = 1}}
+%%  end.
