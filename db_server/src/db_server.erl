@@ -43,6 +43,8 @@ establish_db_connection() ->
     WorkerOptions = proplists:get_value(worker_options, DatabaseConnectionConfig,[{database,<<"test">>}]),
     IndexOptions = proplists:get_value(index_options,DatabaseConnectionConfig,[]),
     {ok, TopologyPid} = mongoc:connect(Seed, ConnectionList,WorkerOptions),
+    lager:info( "Mongodb Connection{Seed: ~p, ConnectionList: ~p, WorkerOptions: ~p} established with TopologyPid: ~p",
+      [Seed, ConnectionList,WorkerOptions,TopologyPid]),
     lists:foreach(fun({IndexCollection, Index}) ->
       mongo_api:ensure_index(TopologyPid, IndexCollection, Index)
                   end,

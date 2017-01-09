@@ -10,7 +10,6 @@ start_game_server_agent_server() ->
   lager:info( "game server center at node: ~p started.", [ erlang:node() ]).
 
 register_to_registry_node() ->
-  {ok, ConfigList} = file:consult("config/game_server_center.config"),
-  RegistryNodeList = proplists:get_value(registry_node_list,ConfigList, []),
+  RegistryNodeList = config_server:get(game_server_center_config, registry_node_list),
   RegisterInfo = {register_game_server_center_node,erlang:node()},
   register_to_registry_node:register(RegistryNodeList,registered_game_server_center,RegisterInfo).

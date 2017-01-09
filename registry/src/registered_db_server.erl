@@ -23,6 +23,7 @@ handle_cast(_Request, State) ->
   {noreply, State}.
 
 handle_info({register_login_db_node,LoginDbNode},State) ->
+  lager:info( "Try to register_login_db_node: ~p with State: ~p", [LoginDbNode,State]),
   OldList = maps:get(login_db_node_list,State,[]),
   NewList =
     case lists:member(LoginDbNode,OldList) of
