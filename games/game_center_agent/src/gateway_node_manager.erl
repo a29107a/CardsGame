@@ -17,14 +17,16 @@ init([]) ->
   {ok, #{}}.
 
 handle_call({register_a_gateway_node,Node, NodeInfo},_From, State) ->
+  lager:info( "gateway_node_manager, register_a_gateway_node, Node: ~p, NodeInfo:~p", [ Node,NodeInfo ]),
   GatewayNodeList = maps:get(gateway_node_list, State, []),
+  AddedNodeInfo = {Node, NodeInfo},
   NewGatewayNodeList =
   case lists:keymember(Node,1,GatewayNodeList) of
     true ->
-      lists:keystore(Node,1, GatewayNodeList,{Node, NodeInfo});
+      lists:keystore(Node,1, GatewayNodeList,AddedNodeInfo);
     false ->
       erlang:monitor_node(Node, true),
-      [Node | GatewayNodeList]
+      [AddedNodeInfo | GatewayNodeList]
   end,
   NewState = maps:put(gateway_node_list, NewGatewayNodeList, State),
   {reply, ok, NewState};
@@ -36,9 +38,8 @@ handle_cast(_Request, State) ->
   {noreply, State}.
 
 handle_info({nodedown, Node}, State) ->
-  NewState = maps:update_with(gateway_node_list,
-    fun(OldList) -> lists:keydelete(Node, 1, OldList) end,
-      State),
+  lager:info( "nodedown, Node: ~p", [ Node ]),
+  NewState = maps:update_with(gateway_node_list, fun(OldList) -> lists:keydelete(Node, 1, OldList) end, State),
   {noreply, NewState};
 
 handle_info(_Info, State) ->
