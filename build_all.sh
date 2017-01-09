@@ -34,6 +34,14 @@ cd ..
 
 cd ..
 
+cd games
+
+cd game_center_agent
+sh build.sh
+cd ..
+
+cd ..
+
 cd registry
 rm -frv ebin
 sh build.sh
