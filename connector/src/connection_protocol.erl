@@ -102,8 +102,12 @@ handle_info(_Info, State) ->
   {noreply, State}.
 
 terminate(Reason,State) ->
-  TerminateHandler = maps:get(terminate, State,0),
-  TerminateHandler:terminate(Reason, State),
+  case maps:find(terminate, State) of
+    {ok, TerminateHandler} when erlang:is_atom(TerminateHandler) ->
+      TerminateHandler:terminate(Reason,State);
+    error ->
+      ignore
+  end,
   ok.
 
 code_change(_OldVsn, State, _Extra) ->
