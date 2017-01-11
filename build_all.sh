@@ -18,6 +18,10 @@ cd ..
 
 cd game_hall
 
+cd registry
+rm -fr ebin && sh build.sh &
+cd ..
+
 cd login_server
 rm -fr ebin && sh build.sh &
 cd ..
@@ -34,10 +38,6 @@ cd game_center_agent
 rm -fr ebin && sh build.sh &
 cd ..
 
-cd ..
-
-cd registry
-rm -fr ebin && sh build.sh &
 cd ..
 
 echo "all building process started!"
