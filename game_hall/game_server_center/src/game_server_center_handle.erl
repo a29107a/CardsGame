@@ -1,6 +1,6 @@
 -module(game_server_center_handle).
 
--include("game_server_center.hrl").
+-include("game_server_center_pb.hrl").
 
 -export([handle/2]).
 

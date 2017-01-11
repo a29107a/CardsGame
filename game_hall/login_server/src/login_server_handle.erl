@@ -1,6 +1,6 @@
 -module(login_server_handle).
 
--include("login.hrl").
+-include("login_pb.hrl").
 
 -export([handle/2]).
 

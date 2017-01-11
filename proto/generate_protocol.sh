@@ -7,7 +7,7 @@
 
 for f in $(ls *.proto)
 do
-../deps/gpb/bin/protoc-erl -defaults-for-omitted-optionals -pldefs -I ./ -o-hrl include -o-erl src/pb ${f}
+../deps/gpb/bin/protoc-erl -defaults-for-omitted-optionals -pldefs -modsuffix _pb -msgtolower -I ./ -o-hrl include -o-erl src/pb ${f}
 done
 
 erl -make
