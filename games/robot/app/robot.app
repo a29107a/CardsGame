@@ -1,0 +1,11 @@
+{application, robot, [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+    kernel,
+    stdlib
+  ]},
+  {mod, {robot_app, []}},
+  {env, []}
+]}.

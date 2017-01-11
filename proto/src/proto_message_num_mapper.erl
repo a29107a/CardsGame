@@ -2,7 +2,7 @@
 
 -export([get/1]).
 
--define(L(Message), {login, Message}).
+-define(L(Message), {login_pb, Message}).
 
 get(cl_login) -> ?L(1001);
 get(1001) -> ?L(cl_login);
