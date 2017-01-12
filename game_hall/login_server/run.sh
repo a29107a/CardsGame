@@ -5,5 +5,6 @@ erl -pa ebin \
     -pa ../../deps/ranch/ebin \
     -pa ../../shared/ebin \
     -pa $(find ../../deps/lager -name ebin) \
+    -pa $(find ../../proto -name ebin) \
     -name login@127.0.0.1 -detached \
     -s user_default start_login_server

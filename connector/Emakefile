@@ -1,1 +1,1 @@
-{ "src/*", [{outdir,"ebin"},  verbose, report]}.
+{ "src/*", [{outdir,"ebin"}, {parse_transform,lager_transform}, verbose, report]}.

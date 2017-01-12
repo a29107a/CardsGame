@@ -34,7 +34,7 @@ get_one_game_center_node() ->
   end.
 
 get_one_service() ->
-  case gen_server:call(?MODULE, get_game_center_nodes,timer:seconds(30)) of
+  case gen_server:call(?MODULE, get_one_service,timer:seconds(30)) of
     OneMap when erlang:is_map(OneMap) ->
       #{login_db_nodes := LoginDbNodes,game_center_nodes := GameCenterNodes} = OneMap,
       OneLoginDbNode = utilities:list_random_one(LoginDbNodes),

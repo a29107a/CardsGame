@@ -5,18 +5,24 @@
 -export([handle/2]).
 
 handle(Message,Connection) ->
-  lager:info("Module: ~p handle message : ~p when Connection state is: ~p", [?MODULE,Message,Connection]),
-  handle2(Message,Connection).
-
+  lager:info("Module:~p  handling message:~p when Connection state is: ~p", [?MODULE,Message,Connection]),
+  try
+    handle2(Message,Connection)
+  catch
+    ErrorType:ErrorReason ->
+      lager:error("~p catch error, ErrorType: ~p, ErrorReason: ~p, stacktrace: ~p",
+        [?MODULE, ErrorType, ErrorReason, erlang:get_stacktrace()])
+  end.
 
 handle2(custom_initialization,Connection) ->
   OneService= login_server_registry_agent:get_one_service(),
   #{one_login_db_node := OneDbNode, one_game_center_node := OneGameCenterNode} = OneService,
-  Connection#{db_node => OneDbNode, game_center_node => OneGameCenterNode};
+  NewConnection = Connection#{db_node => OneDbNode, game_center_node => OneGameCenterNode},
+  NewConnection;
 
 handle2(Message, Connection) when erlang:is_record(Message, cl_login)->
   #cl_login{platform_id = PlatformId, parameters = QuickLoginDeviceString} = Message,
-  DbNode = maps:put(db_node,Connection),
+  DbNode = maps:get(db_node,Connection),
   case PlatformId of
     0 ->
       QuerySelector = #{platform_id => PlatformId,account_name => QuickLoginDeviceString},
@@ -27,19 +33,33 @@ handle2(Message, Connection) when erlang:is_record(Message, cl_login)->
           AccountProcessName = login_server_utils:account_id_to_login_process_name(AccountId),
           case global:register_name(AccountProcessName, erlang:self()) of
             yes ->
-              {reply, #lc_login_result{error_code = 0, account_id = AccountId, account_info = AccountInfo}};
+              {reply,
+                #lc_login_result{error_code = 0, account_id = AccountId, account_info = AccountInfo},
+                  maps:merge(Connection,OneMap)};
             no ->
               {stop, #lc_login_result{error_code = 1}}
           end;
         {} ->
-          CreateMaps = #{platform_id => PlatformId,account_name => QuickLoginDeviceString},
+          CreateMaps = #{
+            account_id => login_server_uid:get(),
+            platform_id => PlatformId,
+            account_name => QuickLoginDeviceString},
           case rpc:call(DbNode,db_login_account,create_account, [CreateMaps]) of
             false ->
               {reply, #lc_login_result{error_code = 2}};
             {true,OneMap} ->
               AccountId = maps:get(account_id, OneMap),
               AccountInfo = #account_info{account_id = AccountId},
-              {reply, #lc_login_result{error_code = 0, account_id = AccountId, account_info = AccountInfo}}
+              AccountProcessName = login_server_utils:account_id_to_login_process_name(AccountId),
+              case global:register_name(AccountProcessName, erlang:self()) of
+                yes ->
+                  {reply,
+                    #lc_login_result{error_code = 0, account_id = AccountId, account_info = AccountInfo},
+                    maps:merge(Connection, OneMap)
+                    };
+                no ->
+                  {stop, #lc_login_result{error_code = 1}}
+              end
           end
       end;
     _ ->

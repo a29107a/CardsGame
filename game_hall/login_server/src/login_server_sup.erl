@@ -26,4 +26,10 @@ init([]) ->
     Restart, Shutdown, Type,
     ['login_server_registry_agent']
   },
-  {ok, {SupFlags, [LoginConfigServer,RegistryServerAgent]}}.
+  LoginServerUid = {
+    login_server_uid,
+    {login_server_uid,start_link, []},
+    Restart,Shutdown,Type,
+    [login_server_uid]
+  },
+  {ok, {SupFlags, [LoginConfigServer,RegistryServerAgent, LoginServerUid]}}.

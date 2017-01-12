@@ -35,15 +35,17 @@ init(Ref, Socket, Transport, Opts) ->
   {ok, {Ip,Port}} = inet:peername(Socket),
   ThisMilliSeconds = erlang:system_time(milli_seconds),
   IpStringBinary = unicode:characters_to_binary(inet:ntoa(Ip)),
+  DefaultSocketOptions = [{active, ?ACTIVE_NUM},{packet, 4},{keepalive, true},binary],
+  ConnectionSocketOptions = maps:get(socket_options, Opts,DefaultSocketOptions),
+  ok = inet:setopts(Socket,ConnectionSocketOptions),
   ScoketStateMap = #{
     socket => Socket,
     transport => Transport,
     ip => IpStringBinary,
-    port => Port,
+    remote_port => Port,
     last_tcp_passive_milli_seconds => ThisMilliSeconds,
     last_heart_beat => ThisMilliSeconds},
   ConnectionMap = maps:merge(ScoketStateMap,Opts),
-  erlang:send(erlang:self(),initialize_socket_parameters),
   erlang:send(erlang:self(),{use_handler,custom_initialization}),
   gen_server:enter_loop(?MODULE, [],ConnectionMap, timer:seconds(10)).
 
@@ -53,14 +55,11 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
   {noreply, State}.
 
-handle_info(initialize_socket_parameters, State) ->
-  Socket = maps:get(socket,State),
-  inet:setopts(Socket, [{active, ?ACTIVE_NUM},{packet, 4},{keepalive, true},binary]),
-  {noreply,State};
-
 handle_info({use_handler,Message},Connection) ->
   try
-      handle(Message,Connection)
+      UserHandlerResult = handle(Message,Connection),
+      lager:error( "UserHandlerResult: ~p", [ UserHandlerResult]),
+      UserHandlerResult
   catch
       _ErrorType:_ErrorReason ->
         {noreply, Connection}
@@ -70,7 +69,9 @@ handle_info({tcp, Socket, BinarySocketData}, #{socket := Socket} = Connection) -
   try
     Decoder = maps:get(decoder,Connection),
     Message = Decoder:decode(BinarySocketData),
-    handle(Message, Connection)
+    TcpDataHandleResult = handle(Message, Connection),
+    lager:error( "TcpDataHandleResult: ~p", [ TcpDataHandleResult]),
+    TcpDataHandleResult
     catch
       _ErrorType:_ErrorReason ->
         {noreply, Connection}
@@ -98,7 +99,8 @@ handle_info({tcp_error,_,Reason}, State) ->
 handle_info(timeout, State) ->
   {stop, normal, State};
 
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+  lager:error( "Module:~p, Unhandled info: ~p, State: ~p ~n", [?MODULE,Info, State]),
   {noreply, State}.
 
 terminate(Reason,State) ->

@@ -26,7 +26,7 @@ start_link() ->
 
 init([]) ->
   erlang:send(erlang:self(), init),
-  {ok, #{}}.
+  {ok, #{encoder => pb_codec, decoder => pb_codec,transport => gen_tcp}}.
 
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
@@ -56,10 +56,16 @@ terminate(Reason, State) ->
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
-send_request_to(Where,Connection,Reply) when erlang:is_binary(Reply) ->
+send_request_to(Where,Connection,Request) when erlang:is_binary(Request) ->
   #{Where := Socket, transport := Transport} = Connection,
-  Transport:send(Socket, Reply);
-send_request_to(Where,Connection,Reply) when erlang:is_tuple(Reply) ->
+  case Transport:send(Socket, Request) of
+    ok ->
+      ok;
+    {error,Reason} ->
+      lager:error( "send_request_to error, Reason: ~p", [ Reason ])
+  end;
+send_request_to(Where,Connection,Request) when erlang:is_tuple(Request) ->
+  lager:info( "send request: ~p to :~p ", [ Request, Where]),
   Encoder = maps:get(encoder,Connection),
-  BinaryReply = Encoder:encode(Reply),
-  send_request_to(Where,Connection, BinaryReply).
+  BinaryRequest = Encoder:encode(Request),
+  send_request_to(Where,Connection, BinaryRequest).

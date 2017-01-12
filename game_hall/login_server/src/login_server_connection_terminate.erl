@@ -3,4 +3,4 @@
 -compile(export_all).
 
 terminate(Reason,Connection) ->
-  lager:info( "Connection: ~p terminated with Reason: ~p", [ Connection, Reason]).
+  lager:info("Connection: ~p terminated with Reason: ~p" ,[ Connection, Reason]).

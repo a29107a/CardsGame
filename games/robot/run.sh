@@ -3,5 +3,6 @@
 erl -pa ebin \
     -pa $(find ../../deps/lager -name ebin) \
     -pa ../../shared/ebin \
+    -pa ../../proto/ebin \
     -name robot@127.0.0.1 -detached \
     -s user_default start_robot
