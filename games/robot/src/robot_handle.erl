@@ -25,5 +25,13 @@ handle2(init,State) ->
       stop
   end;
 
+handle2({tcp,ToLoginServerSocket, Data},#{to_login_server_socket := ToLoginServerSocket} = State) ->
+  Decoder = maps:get(decoder,State),
+  Message = Decoder:decode(Data),
+  lager:info( "Received Message: ~p when State: ~p", [Message,State]),
+  RobotMessageHandleResult = robot_message:handle(Message, State),
+  inet:setopts(ToLoginServerSocket, [{active,once}]),
+  RobotMessageHandleResult.
+
 handle2(Info,State) ->
   lager:error( "Unhandled Info: ~p when State is ~p",[Info,State]).
