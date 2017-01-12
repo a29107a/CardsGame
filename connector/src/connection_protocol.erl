@@ -58,7 +58,6 @@ handle_cast(_Request, State) ->
 handle_info({use_handler,Message},Connection) ->
   try
       UserHandlerResult = handle(Message,Connection),
-      lager:error( "UserHandlerResult: ~p", [ UserHandlerResult]),
       UserHandlerResult
   catch
       _ErrorType:_ErrorReason ->
@@ -70,7 +69,6 @@ handle_info({tcp, Socket, BinarySocketData}, #{socket := Socket} = Connection) -
     Decoder = maps:get(decoder,Connection),
     Message = Decoder:decode(BinarySocketData),
     TcpDataHandleResult = handle(Message, Connection),
-    lager:error( "TcpDataHandleResult: ~p", [ TcpDataHandleResult]),
     TcpDataHandleResult
     catch
       _ErrorType:_ErrorReason ->
