@@ -7,6 +7,13 @@
 
 -define(SOCKET_OPTIONS,[{active,once},{keepalive, true},{mode, binary},{packet,4}]).
 
+handle(Info,State)
+  when erlang:is_tuple(Info) andalso
+  erlang:tuple_size(Info) =:= 3 andalso
+  erlang:element(1,Info) =:= tcp andalso
+  erlang:is_port(erlang:element(2,Info)) andalso
+  erlang:is_binary(erlang:element(3,Info)) ->
+  handle2(Info, State);
 handle(Info, State) ->
   lager:info("~p try to handle info : ~p when state is : ~p", [?MODULE,Info,State]),
   handle2(Info,State).
@@ -31,7 +38,7 @@ handle2({tcp,ToLoginServerSocket, Data},#{to_login_server_socket := ToLoginServe
   lager:info( "Received Message: ~p when State: ~p", [Message,State]),
   RobotMessageHandleResult = robot_message:handle(Message, State),
   inet:setopts(ToLoginServerSocket, [{active,once}]),
-  RobotMessageHandleResult.
+  RobotMessageHandleResult;
 
 handle2(Info,State) ->
   lager:error( "Unhandled Info: ~p when State is ~p",[Info,State]).

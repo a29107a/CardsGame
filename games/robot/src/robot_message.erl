@@ -10,9 +10,11 @@ handle(Message,Robot) when erlang:is_record(Message, lc_login_result)->
   case ErrorCode of
     0 ->
       #account_info{account_id = AccountId} = AccountInfo,
-      robot:send_request_to(to_login_server_socket,Robot,#cl_fetch_game_server_list),
+      robot:send_request_to(to_login_server_socket,Robot,#cl_fetch_game_server_list{}),
       maps:merge(Robot,#{account_id => AccountId});
     ErrorCode ->
       lager:error("Robot login error with error code: ~p", [ ErrorCode])
-  end.
+  end;
 
+handle(Message,Robot) ->
+  lager:error( "Unhandled Message:~p in Robot: ~p", [Message, Robot]).
